@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+import pandas as pd
 
 n=1000                                  # number interpolated values
 
