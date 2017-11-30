@@ -5,6 +5,11 @@ import pandas as pd
 
 n=1000                                  # number interpolated values
 
+input = pd.read_csv('input.csv', header=None)
+input_matrix = np.array([input.loc[0, ], input.loc[1, ]], dtype='float64')
+input_matrix[0,0] = float(input_matrix[0,0])
+input_matrix[1,0] = float(input_matrix[1,0])
+
 class rates_interpolation:
     interpolator = np.zeros((2, n))     # matrix of interpolated values and tenors
 
@@ -14,8 +19,8 @@ class rates_interpolation:
         self.input_rates = ir           # input rates
 
     def make_interpolator(self):
-        if(self.method == "CS"):
-            self.CS()
+        if(self.method == "cubic_spline"):
+            self.cubic_spline()
             self.draw_plot()
 
     def draw_plot(self):
@@ -27,12 +32,10 @@ class rates_interpolation:
         plt.legend(['draw', 'interpolation'])
         plt.show()
 
-    def CS(self):
+    def cubic_spline(self):
         f = interp1d(self.input_rates[1, ], self.input_rates[0, ], kind='cubic')
         time_points = np.linspace(self.input_rates[1, 0], self.input_rates[1, -1], n)
         self.interpolator = np.array([f(time_points), time_points])
 
-matrix = np.array([[0.01, 0.02, 0.03, 0.02, 0.05], [1, 2, 3, 4, 5]])
-inter = rates_interpolation("CS", "forwards", matrix)
-inter.CS()
+inter = rates_interpolation(input.loc[3, 0], input.loc[2, 0], input_matrix)
 inter.make_interpolator()
