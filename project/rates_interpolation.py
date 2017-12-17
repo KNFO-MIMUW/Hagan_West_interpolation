@@ -163,7 +163,7 @@ class rates_interpolation:
 
 
 #inter = rates_interpolation(input.loc[3, 0], input.loc[2, 0], input_matrix)
-inter = rates_interpolation("raw", input.loc[2,0], input_matrix)
+inter = rates_interpolation("minimalist", input.loc[2,0], input_matrix)
 inter.make_interpolator()
 
 
