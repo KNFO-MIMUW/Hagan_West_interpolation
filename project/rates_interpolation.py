@@ -1,10 +1,10 @@
 import numpy as np
-from scipy.interpolate import interp1d
+from scipy.interpolate import CubicSpline
 import matplotlib.pyplot as plt
 import pandas as pd
 
-n=1000                        # number interpolated values
-
+n=1000                       # number interpolated values
+w =0.2
 input = pd.read_csv('input.csv', header=None)
 input_matrix = np.array([input.loc[0, ], input.loc[1, ]], dtype='float64')
 
@@ -37,9 +37,20 @@ class rates_interpolation:
         plt.show()
 
     def cubic_spline(self):
-        func = interp1d(self.ir[1, ], self.ir[0, ], kind='cubic')
+        """ Cublic Spline for forward and spot curves 
+        Input rates: only spot
+        Output rates: spot or forward rates
+        """
+        # Compute Cublic Spline for spot rates
+        func = CubicSpline(self.ir[1, ], self.ir[0, ])
         time_points = np.linspace(self.ir[1, 0], self.ir[1, -1], n)
-        self.interpolator = np.array([func(time_points), time_points])
+        if self.t == "forward":
+            # Calculate d/d(tau) r(tau)* tau = r'(tau) * tau + r(tau)
+            func_derivative = func.derivative(nu=1)
+            interpolation_values = func_derivative(time_points) * time_points + func(time_points)
+            self.interpolator = np.array([interpolation_values, time_points])
+        else: # spot rates 
+            self.interpolator = np.array([func(time_points), time_points])
 
     def fmcs(self):                      # Forward Monotone Convex Spline
         fwd = np.zeros(len(self.ir[0])+1, dtype='float64')
@@ -92,7 +103,7 @@ class rates_interpolation:
         """The Minimalist Interpolation
         - moze tu jakis opis pozniej zrobie
         """
-        w = 0.8 # Moze warto to przerobic by mozma bylo sobie wyznaczyc samodzielnie
+        #w = 0.8 # Moze warto to przerobic by mozma bylo sobie wyznaczyc samodzielnie
         # m - number of input nodes
         m = len(self.ir[0,:])
         tau = np.insert(self.ir[1,:],0,0)
@@ -153,7 +164,7 @@ class rates_interpolation:
         a = x[0:len(x):3]
         b = x[1:len(x):3]
         c = x[2:len(x):3]
-        print(a + 1/2 * b * h + 1/3 * c * (h ** 2))
+        #print(a + 1/2 * b * h + 1/3 * c * (h ** 2))
         " Find minimalist interpolator"
         #f(tau) = ai + bi * (tau - tau(i-1)) + ci(tau - tau(i-1))^2 for tau(i-1)<= tau <= tau(i)
         self.interpolator[1, :] = np.linspace(0, self.ir[1, -1],n)
@@ -162,9 +173,6 @@ class rates_interpolation:
             self.interpolator[0, time_condition] = a[i] + b[i] *(self.interpolator[1, time_condition] - tau[i]) + c[i] *((self.interpolator[1, time_condition] - tau[i]) ** 2)
 
 
-#inter = rates_interpolation(input.loc[3, 0], input.loc[2, 0], input_matrix)
-inter = rates_interpolation("minimalist", input.loc[2,0], input_matrix)
+inter = rates_interpolation(input.loc[3, 0], input.loc[2, 0], input_matrix)
+inter = rates_interpolation("cubic_spline", "spot", input_matrix)
 inter.make_interpolator()
-
-
-
